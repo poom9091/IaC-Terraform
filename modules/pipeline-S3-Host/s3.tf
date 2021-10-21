@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "codepipeline_bucket" {
-  bucket_prefix = "${lower(var.PROJECT_NAME)}-arti/${lower(var.ENV)}"
+  bucket        = lower(var.CODEPIPELINE_NAME)
   acl           = "private"
   force_destroy = true
 }
