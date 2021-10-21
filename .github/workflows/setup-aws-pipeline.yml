@@ -9,7 +9,7 @@ env:
   TERRAFORM_DESTORY: false
 
 on: 
-  create:
+  push:
     branches:
       - develop
       - uat
