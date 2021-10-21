@@ -7,12 +7,6 @@ resource "aws_sns_topic_policy" "topic_policy" {
   policy = data.aws_iam_policy_document.sns_topic_policy.json
 }
 
-resource "aws_ssm_parameter" "sns_paratermer" {
-  name  =  var.SET_POLICY == "web_pipeline" ? "/Terraform/SNS_Topic/Noti_Pipeline/${lower(var.ENV)}_${lower(var.PROJECT_NAME)}" : "/Terraform/SNS_Topic/Noti_Pipeline/${lower(var.ENV)}_${lower(var.PROJECT_NAME)}_gitops_pipeline"
-  # name  = "/Terraform/SNS_Topic/Noti_Pipeline/${lower(var.ENV)}"
-  type  = "String"
-  value = aws_sns_topic.codepipeline.id
-}
 data "aws_iam_policy_document" "sns_topic_policy" {
   policy_id = "__default_policy_ID"
 
