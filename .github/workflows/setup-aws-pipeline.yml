@@ -9,7 +9,7 @@ env:
   TERRAFORM_DESTORY: false
 
 on: 
-  push:
+  create:
     branches:
       - develop
       - uat
@@ -17,7 +17,6 @@ on:
       - main
 
 jobs:
-
   getbranch:
     name: 'Get Branch'
     runs-on: ubuntu-latest

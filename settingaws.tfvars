@@ -1,9 +1,5 @@
-# AWS_REGION = "ap-southeast-1"
-PROJECT_NAME="next-pubadee"
+PROJECT_NAME="next-boilerplate"
 REPO_ID="poom9091/Next-Boilerplate"
-ServerSide=true
-#SLACK_WORKSPACE="T02B8EC7M0S"
-#SLACK_CHANNEL="C02BM39UNRX"
 
 # AWS_ACCESS_KEY
 # AWS_SECRET_KEY
