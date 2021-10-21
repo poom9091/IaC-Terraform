@@ -31,7 +31,7 @@ variable "PROJECT_IAC_NAME" {
 # Dynamic Setting Service Name
 locals {
   #Codepipeline name 
-  PIPELINE_NAME = "${var.ENV_NAME}-${var.PROJECT_IAC_NAME}-gitops" 
+  PIPELINE_NAME = "${var.ENV_NAME}-${var.PROJECT_IAC_NAME}-infra-pipeline" 
   ENV_VARIABLE = { 
     ENV = "${var.ENV_NAME}" == "main" || "${var.ENV_NAME}" ==  "master" ? "prod" : "${var.ENV_NAME}" ,
     REGION = var.AWS_REGION ,
