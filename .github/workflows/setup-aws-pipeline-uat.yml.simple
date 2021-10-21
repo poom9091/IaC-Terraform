@@ -1,0 +1,84 @@
+name: 'Setup-AWS-Pipeline-UAT'
+
+env:
+  # AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+  # AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY}}
+  TF_VAR_AWS_REGION: ${{ secrets.AWS_REGION }}
+  TF_VAR_SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+  TF_VAR_SLACK_WORKSPACE: ${{ secrets.SLACK_WORKSPACE }}
+  TERRAFORM_DESTORY: false
+
+on: 
+  push:
+    branches:
+      - uat
+
+jobs:
+
+  getbranch:
+    name: 'Get Branch'
+    runs-on: ubuntu-latest
+    defaults: 
+      run: 
+        shell: bash
+    steps: 
+      - name: Set output Branch name
+        id: vars
+        shell: bash
+        run: |
+          echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
+    
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    defaults: 
+      run: 
+        shell: bash
+
+    environment: uat
+    env:
+      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v2
+     
+    - name: Set output Branch name
+      id: vars
+      shell: bash
+      run: |
+        echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
+
+    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_wrapper: false 
+
+    - name: Setup Terraform remote
+      working-directory: ./remote-state
+      env:
+        TF_VAR_GIT_REPO_NAME: ${{ github.event.repository.name }}
+        TF_VAR_GIT_BRANCH: ${{ steps.vars.outputs.branch }}-pipeline
+      run: |
+        terraform init
+        terraform validate
+        terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
+        chmod +x "../script/setbackend.sh"
+        ../script/setbackend.sh pipeline
+        rm -rf *.tfstate 
+            
+    - name: Create AWS pipeline
+      working-directory: ./global/AWS-pipeline
+      env:
+        TF_VAR_ENV_NAME: ${{ steps.vars.outputs.branch }}
+        TF_VAR_BRANCH_NAME: ${{ steps.vars.outputs.branch }}
+        TF_VAR_PROJECT_IAC_NAME: ${{ github.event.repository.name }}
+        TF_VAR_REPO_IAC_ID: ${{ github.repository }}
+      run: |
+        terraform init
+        terraform validate
+        terraform apply -input=false -auto-approve  
+

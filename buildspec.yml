@@ -1,0 +1,58 @@
+version: 0.2
+
+phases: 
+
+  install:
+    commands: 
+      - apt install unzip -y
+      - wget https://releases.hashicorp.com/terraform/1.0.2/terraform_1.0.2_linux_amd64.zip
+      - unzip terraform_1.0.2_linux_amd64.zip
+      - mv terraform /usr/local/bin/
+      - terraform --version 
+
+  pre_build:
+    commands:
+      # setting remote state
+      - export TF_VAR_AWS_REGION=$REGION
+      - export TF_VAR_GIT_REPO_NAME=$REPO_PROJECT_NAME
+      - export TF_VAR_GIT_BRANCH=$REPO_PROJECT_BRANCH
+      - export TF_VAR_SLACK_CHANNEL=$SLACK_CHANNEL
+      - export TF_VAR_SLACK_WORKSPACE=$SLACK_WORKSPACE
+      - export GIT_BRANCH=$ENV
+      - cd ./remote-state
+      - terraform init 
+      - terraform validate  
+      - terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
+      - chmod +x ../script/setbackend.sh 
+      - ../script/setbackend.sh $GIT_BRANCH
+      - rm -rf *.tfstate 
+      - cd ../
+
+      # setting remote state chatbot 
+      - export TF_VAR_GIT_BRANCH=chatbot
+      - export GIT_BRANCH=chatbot
+      - cd ./remote-state-awschatbot
+      - terraform init 
+      - terraform validate  
+      - terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
+      - chmod +x ../script/setbackend.sh 
+      - ../script/setbackend.sh chatbot
+      - rm -rf *.tfstate && cd ../
+      # terraform plan
+      - cd ./environment/$ENV
+      - terraform init
+      - terraform plan -var-file='../../settingaws.tfvars'
+  build:
+    commands:
+      - terraform apply -auto-approve -var-file='../../settingaws.tfvars'
+      - cd ../../
+  post_build:
+    commands:
+      # Get Parameter store
+      - cd ./script
+      - chmod +x get-ssm.sh 
+      - bash get-ssm.sh  $TF_VAR_AWS_REGION
+      - cd ../global/AWS-Chatbot
+      - terraform init
+      - terraform apply -auto-approve -var-file='../../settingaws.tfvars'
+

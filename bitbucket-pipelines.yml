@@ -1,0 +1,45 @@
+image: hashicorp/terraform:1.1.0-alpha20210811
+
+pipelines:
+    default:
+        - step:
+            script:
+                - echo Check Terraform
+                - cd develop
+                - terraform init 
+                # - terraform validate
+                - terraform plan
+    branches:
+        develop:
+            - step:
+                script:
+                    - echo Check Terraform $GIT_BRANCH
+                    - export TF_VAR_GIT_REPO_NAME=$GIT_REPO_SLUG
+                    - export TF_VAR_GIT_BRANCH=$GIT_BRANCH
+                    - cd remote-state
+                    - terraform init 
+                    - terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
+                    - . ../script/setbackend.sh 
+                    # - terraform destroy -auto-approve
+                    # - terraform validate
+                    - cd ../$GIT_BRANCH
+                    - terraform init
+                    - terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars'
+                    # - terraform destroy -auto-approve
+        uat:
+            - step:
+                script:
+                    - echo Check Terraform $GIT_BRANCH
+                    - export TF_VAR_GIT_REPO_NAME=$GIT_REPO_SLUG
+                    - export TF_VAR_GIT_BRANCH=$GIT_BRANCH
+                    - cd remote-state
+                    - terraform init 
+                    - terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
+                    - . ../script/setbackend.sh 
+                    # - terraform destroy -auto-approve
+                    # - terraform validate
+                    - cd ../$GIT_BRANCH
+                    - terraform init
+                    - terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars'
+                    # - terraform destroy -auto-approve
+        
