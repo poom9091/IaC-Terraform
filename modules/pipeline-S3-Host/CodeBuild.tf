@@ -1,5 +1,5 @@
 resource "aws_codebuild_project" "codebuild" {
-  name         = var.SET_POLICY == "web_pipeline"? "${var.ENV}-${var.PROJECT_NAME}-codebuild" : "${var.ENV}-${var.PROJECT_NAME}-gitops-pipeline"
+  name         = var.SET_POLICY == "web_pipeline"? "${var.ENV}-${var.PROJECT_NAME}-codebuild" : "${var.ENV}-${var.PROJECT_NAME}-infra-pipeline"
   service_role = aws_iam_role.RoleCodebuild.arn
 
   artifacts {
