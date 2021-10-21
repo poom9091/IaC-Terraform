@@ -1,6 +1,5 @@
 resource "aws_s3_bucket" "host" {
-  bucket = "${lower(var.PROJECT_NAME)}-host"
-  bucket_prefix = "${lower(var.BUCKET_NAME_HOSTING)}" 
+  bucket_prefix = "${lower(var.PROJECT_NAME)}-host/${lower(var.BUCKET_NAME_HOSTING)}" 
   acl    = "public-read"
   versioning {
     enabled = true
