@@ -32,3 +32,13 @@ module "codepipeline" {
   SLACK_WORKSPACE_ID = var.SLACK_WORKSPACE
   #SSR = var.ServerSide
 }
+
+resource "aws_s3_bucket" "test-pipeline" {
+  bucket = "demo-bucket-test-terraform"
+  acl    = "private"
+
+  tags = {
+    Name        = "My bucket"
+    Environment = "Dev"
+  }
+}
