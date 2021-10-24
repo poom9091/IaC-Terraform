@@ -1,7 +1,10 @@
 
-#SLACK_WORKSPACE="T02B8EC7M0S"
-#SLACK_CHANNEL="C02BM39UNRX"
+SLACK_WORKSPACE=""
+SLACK_CHANNEL=""
 
 ## Project Repository
-#REPO_ID="poom9091/React-Boilerplate"
-BRANCH_NAME="main"
+REPO_ID=""
+BRANCH_NAME=""
+
+## Project_Name
+PROJECT_NAME = ""

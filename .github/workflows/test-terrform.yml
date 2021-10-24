@@ -50,29 +50,35 @@ jobs:
       uses: hashicorp/setup-terraform@v1
       with:
         terraform_wrapper: false
-
-    - name: Setup Terraform remote
+     
+    - name: DEV Setup Terraform remote 
       working-directory: ./remote-state
-      if: | 
-        contains(github.ref,'develop') || 
-        contains(github.ref,'uat')      
       env:
         TF_VAR_GIT_REPO_NAME: ${{ github.event.repository.name }}
-        TF_VAR_GIT_BRANCH: ${{ steps.vars.outputs.branch }} 
-        GIT_BRANCH: ${{ steps.vars.outputs.branch }}
+        TF_VAR_GIT_BRANCH: develop 
       run: |
         terraform init
         terraform validate
         terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
-        # chmod +x "../script/setbackend.sh"
-        ../script/setbackend.sh ${ env.GIT_BRANCH }}
+        chmod +x "../script/setbackend.sh"
+        ../script/setbackend.sh develop 
         rm -rf *.tfstate
      
+    - name: UAT Setup Terraform remote 
+      working-directory: ./remote-state
+      env:
+        TF_VAR_GIT_REPO_NAME: ${{ github.event.repository.name }}
+        TF_VAR_GIT_BRANCH: uat 
+      run: |
+        terraform init
+        terraform validate
+        terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
+        chmod +x "../script/setbackend.sh"
+        ../script/setbackend.sh uat 
+        rm -rf *.tfstate
+
     - name:  Prod Setup Terraform remote 
       working-directory: ./remote-state
-      if: | 
-        contains(github.ref,'main') ||
-        contains(github.ref,'master')
       env:
         TF_VAR_GIT_REPO_NAME: ${{ github.event.repository.name }}
         TF_VAR_GIT_BRANCH: prod 
@@ -84,14 +90,6 @@ jobs:
         ../script/setbackend.sh prod
         rm -rf *.tfstate
     
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-    - name: Terraform plan for test feature branch
-      working-directory: ./environment/develop
-      if: contains(github.ref,'feature') 
-      run: |
-       terraform init 
-       terraform plan -var-file='../../settingaws.tfvars'
-       
     - name: Terraform Test DEV Environment
       env:
         GIT_BRANCH: develop 
