@@ -2,8 +2,8 @@ name: 'Destroy-Terraform-gitops'
 
 env:
   AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
-  AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY}}
-  TF_VAR_AWS_REGION: ap-southeast-1
+  AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+  TF_VAR_AWS_REGION: ${{ secrets.AWS_REGION }}
   
 on:
   delete:
@@ -29,6 +29,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
      
+    - name: Clean up
+      if: github.event.ref_type == 'branch'
+      run: |
+            echo "Clean up for branch ${{ github.event.ref }}"
+      
     - name: Set output Branch name
       id: vars
       shell: bash
@@ -44,25 +49,27 @@ jobs:
     - name: Setup Terraform remote
       working-directory: ./remote-state
       if: | 
-        contains(github.ref,'develop') || 
-        contains(github.ref,'uat')      
+        ( ${{ github.event.ref }} == 'develop'|| 
+        ${{ github.event.ref }} == 'uat' )   
+        && github.event_name == 'deleted'
       env:
         TF_VAR_GIT_REPO_NAME: ${{ github.event.repository.name }}
-        TF_VAR_GIT_BRANCH: ${{ steps.vars.outputs.branch }} 
-        GIT_BRANCH: ${{ steps.vars.outputs.branch }}
+        TF_VAR_GIT_BRANCH: ${{ github.event.ref }}
+        GIT_BRANCH: ${{ github.event.ref }}
       run: |
         terraform init
         terraform validate
         terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
         chmod +x "../script/setbackend.sh"
-        ../script/setbackend.sh ${env.GIT_BRANCH}
+        ../script/setbackend.sh ${{ github.event.ref }}
         rm -rf *.tfstate
      
     - name:  Prod Setup Terraform remote 
       working-directory: ./remote-state
       if: | 
-        contains(github.ref,'main') ||
-        contains(github.ref,'master')
+        ( ${{ github.event.ref }} == 'develop'|| 
+        ${{ github.event.ref }} == 'uat' )  
+        && github.event_name == 'deleted'
       env:
         TF_VAR_GIT_REPO_NAME: ${{ github.event.repository.name }}
         TF_VAR_GIT_BRANCH: prod 
@@ -72,14 +79,14 @@ jobs:
         terraform validate
         terraform apply -input=false -auto-approve -var-file='../settingaws.tfvars' || true
         chmod +x "../script/setbackend.sh"
-        ../script/setbackend.sh ${env.GIT_BRANCH}
+        ../script/setbackend.sh ${{ github.event.ref }}
         rm -rf *.tfstate
 
-    - name: Setup Terraform remote
+    - name: Setup Terraform remote pipeline
       working-directory: ./remote-state
       env:
         TF_VAR_GIT_REPO_NAME: ${{ github.event.repository.name }}
-        TF_VAR_GIT_BRANCH: ${{ steps.vars.outputs.branch }}-pipeline
+        TF_VAR_GIT_BRANCH: ${{ github.event.ref }}-pipeline
       run: |
         terraform init
         terraform validate
@@ -87,34 +94,43 @@ jobs:
         chmod +x "../script/setbackend.sh"
         ../script/setbackend.sh pipeline
         rm -rf *.tfstate 
+   
 
     - name: Terraform Destroy
       if: |
-        (contains(github.ref,'develop') || 
-        contains(github.ref,'uat') ) 
-      working-directory: ./environment/${{ steps.vars.outputs.branch }}
+        ( ${{ github.event.ref }} == 'develop'|| 
+        ${{ github.event.ref }} == 'uat' )  
+        && github.event_name == 'deleted'
+      working-directory: ./environment/${{ github.event.ref }}
       run: |
         terraform init
-        terraform destroy -auto-approve
+        terraform destroy -auto-approve -var-file='../../settingaws.tfvars'
 
     - name: Prod Terraform Destroy
       if: |
-        ( contains(github.ref,'main') ||
-        contains(github.ref,'master') )
+        ( ${{ github.event.ref }} == 'main'|| 
+        ${{ github.event.ref }} == 'master' )  
+        && github.event_name == 'deleted'
       working-directory: ./environment/prod
       run: |
         terraform init
-        terraform destroy -auto-approve
-    
+        terraform destroy -auto-approve -var-file='../../settingaws.tfvars'
+
+     
+        
     - name: Delete AWS pipeline
       working-directory: ./global/AWS-pipeline
+      if: github.event_name == 'deleted'
       env:
-        TF_VAR_ENV_NAME: ${{ steps.vars.outputs.branch }}
-        TF_VAR_BRANCH_NAME: ${{ steps.vars.outputs.branch }}
+        TF_VAR_ENV_NAME: ${{ github.event.ref }}
+        TF_VAR_BRANCH_NAME: ${{ github.event.ref }}
         TF_VAR_PROJECT_IAC_NAME: ${{ github.event.repository.name }}
         TF_VAR_REPO_IAC_ID: ${{ github.repository }}
       run: |
         terraform init
-        terraform destroy -auto-approve
+        terraform destroy -auto-approve -var-file='../../settingaws.tfvars'
 
       
+
+
+
