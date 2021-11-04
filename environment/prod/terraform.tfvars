@@ -4,10 +4,5 @@
 
 ## Project Repository
 #REPO_ID="poom9091/React-Boilerplate"
-BRANCH_NAME="master"
+BRANCH_NAME="main"
 
-## Project_Name
-#PROJECT_NAME="github-action"
-
-# BUCKET_HOSTING = ""
-# PIPELINE_NAME = ""
